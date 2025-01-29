@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mood Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js -->
+  <style>
+    .container {
+      padding-left: 250px;  /* Add left padding */
+      padding-right: 250px; /* Add right padding */
+    }
+    .form-container {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .mood-btn {
+      margin: 5px;
+      font-size: 20px;
+    }
+    .chart-container {
+      margin-top: 50px;
+    }
+    .prediction-container {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #f1f3f5;
+    }
+    .prediction-header {
+      font-weight: bold;
+      font-size: 1.25rem;
+    }
+    .prediction-box {
+      background-color: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container my-5">
+    <div class="form-container">
+      <h2 class="text-center">Mood Tracker</h2>
+      <form id="mood-form" class="mt-4">
+        <div class="mb-3">
+          <label class="form-label">Select Your Mood</label>
+          <div>
+            <button type="button" class="btn btn-outline-primary mood-btn" data-mood="happy" title="Happy 😊">😊 Happy</button>
+            <button type="button" class="btn btn-outline-secondary mood-btn" data-mood="sad" title="Sad 😢">😢 Sad</button>
+            <button type="button" class="btn btn-outline-success mood-btn" data-mood="excited" title="Excited 🤩">🤩 Excited</button>
+            <button type="button" class="btn btn-outline-danger mood-btn" data-mood="tired" title="Tired 😴">😴 Tired</button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="feedback" class="form-label">Feedback (optional)</label>
+          <textarea class="form-control" id="feedback" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Save Mood</button>
+      </form>
+    </div>
+
+    <div class="chart-container">
+      <h3 class="text-center">Mood Distribution</h3>
+      <canvas id="mood-chart" width="400" height="200"></canvas> <!-- Chart.js Canvas -->
+    </div>
+
+    <div class="mt-5">
+      <h3 class="text-center">Mood History</h3>
+      <ul id="mood-history" class="list-group mt-3"></ul>
+    </div>
+
+    <!-- Mood Prediction Section -->
+    <div class="prediction-container">
+      <div class="prediction-header">Mood Prediction</div>
+      <div id="mood-prediction" class="prediction-box">
+        <p>Your mood prediction is <strong>loading...</strong>.</p>
+        <p>Based on your mood history, here are some suggestions:</p>
+        <ul id="mood-suggestions">
+          <li>Try focusing on positive activities for a happier day!</li>
+          <li>Take a break and relax if you're feeling tired.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const moodForm = document.getElementById('mood-form');
+      const moodHistory = document.getElementById('mood-history');
+      const moodChart = document.getElementById('mood-chart').getContext('2d');
+      const moodPredictionBox = document.getElementById('mood-prediction');
+      const moodSuggestions = document.getElementById('mood-suggestions');
+      let selectedMood = '';
+      let moodData = { happy: 0, sad: 0, excited: 0, tired: 0 };
+
+      document.querySelectorAll('.mood-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          selectedMood = button.getAttribute('data-mood');
+          document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+        });
+      });
+
+      moodForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const feedback = document.getElementById('feedback').value;
+
+        if (!selectedMood) {
+          alert('Please select a mood');
+          return;
+        }
+
+        const response = await fetch('/add-mood', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mood: selectedMood, feedback }),
+        });
+
+        const result = await response.json();
+        alert(result.message || result.error);
+        if (response.ok) {
+          loadMoodHistory();
+          loadMoodChart();
+          calculateMoodPrediction();
+        }
+      });
+
+      async function loadMoodHistory() {
+        const response = await fetch('/mood-history');
+        const moods = await response.json();
+        moodHistory.innerHTML = moods.map(
+          (entry) =>
+            `<li class="list-group-item">
+              <strong>${entry.mood}</strong> - ${entry.feedback || 'No feedback'} 
+              <small class="text-muted">(${entry.timestamp})</small>
+            </li>`
+        ).join('');
+      }
+
+      async function loadMoodChart() {
+        const response = await fetch('/mood-history');
+        const moods = await response.json();
+        moodData = { happy: 0, sad: 0, excited: 0, tired: 0 };
+
+        // Count the number of occurrences of each mood
+        moods.forEach(entry => {
+          moodData[entry.mood] += 1;
+        });
+
+        // Create the chart
+        new Chart(moodChart, {
+          type: 'bar',
+          data: {
+            labels: ['😊 Happy', '😢 Sad', '🤩 Excited', '😴 Tired'],
+            datasets: [{
+              label: 'Mood Frequency',
+              data: [moodData.happy, moodData.sad, moodData.excited, moodData.tired],
+              backgroundColor: ['#007bff', '#6c757d', '#28a745', '#dc3545'],
+              borderColor: ['#007bff', '#6c757d', '#28a745', '#dc3545'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+
+      async function calculateMoodPrediction() {
+        const response = await fetch('/mood-history');
+        const moods = await response.json();
+        const recentMoods = moods.slice(-7);  // Get the last 7 days of mood data
+
+        let moodCounts = { happy: 0, sad: 0, excited: 0, tired: 0 };
+        recentMoods.forEach(entry => {
+          moodCounts[entry.mood] += 1;
+        });
+
+        let prediction = '';
+        let suggestions = [];
+
+        const mostFrequentMood = Object.keys(moodCounts).reduce((a, b) => moodCounts[a] > moodCounts[b] ? a : b);
+
+        switch (mostFrequentMood) {
+          case 'happy':
+            prediction = 'You are in a positive state of mind!';
+            suggestions = ['Keep up the good mood and try engaging in more activities that make you happy!'];
+            break;
+          case 'sad':
+            prediction = 'You seem a bit down lately.';
+            suggestions = ['Consider taking some time for self-care and relaxation. Reach out to a friend or loved one for support.'];
+            break;
+          case 'excited':
+            prediction = 'You are feeling quite energetic!';
+            suggestions = ['Use this energy for productive tasks or try something new and exciting to keep the momentum going.'];
+            break;
+          case 'tired':
+            prediction = 'It looks like you might need some rest.';
+            suggestions = ['Make sure you are getting enough sleep and consider unwinding with calming activities.'];
+            break;
+          default:
+            prediction = 'Your mood is mixed!';
+            suggestions = ['Take time to reflect on how you are feeling and take steps to improve your mood.'];
+            break;
+        }
+
+        // Update prediction box with mood prediction and suggestions
+        moodPredictionBox.innerHTML = `
+          <p>Your mood prediction is <strong>${prediction}</strong></p>
+          <p>Based on your mood history, here are some suggestions:</p>
+          <ul id="mood-suggestions">
+            ${suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+          </ul>
+        `;
+      }
+
+      // Initial load
+      loadMoodHistory();
+      loadMoodChart();
+      calculateMoodPrediction();
+    });
+  </script>
+</body>
+</html>

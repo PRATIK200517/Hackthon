@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Nearby Clinics</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        #map { 
+            height: 800px; 
+            width: 100%; 
+            background-color: white; /* White background for map area */
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        #searchBox { 
+            margin: 10px; 
+            padding: 5px; 
+            width: 300px; 
+        }
+        .clinic-card {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .leaflet-routing-container {
+            font-size: 12px; /* Smaller route font size */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Search for Clinics Near a City</h2>
+        <input type="text" id="searchBox" placeholder="Enter city name" />
+        <button id="searchButton" class="btn btn-primary">Search</button>
+        <button id="findNearbyClinics" class="btn btn-info">Find Clinics Near Me</button> <!-- New button -->
+        <div id="map"></div>
+
+        <div id="clinics-list" class="container mt-4"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.3/dist/leaflet-routing-machine.js"></script>
+    <script>
+        var map = L.map('map').setView([20.5937, 78.9629], 5);  // Centered on India by default
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var currentLocation = null;
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    currentLocation = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                    };
+
+                    L.marker([currentLocation.lat, currentLocation.lon]).addTo(map)
+                        .bindPopup("You are here")
+                        .openPopup();
+                }, function() {
+                    alert("Unable to retrieve your location.");
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        getCurrentLocation();
+
+        // Function to search for clinics
+        function searchLocation(query) {
+            var url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        var location = data[0];
+                        var lat = location.lat;
+                        var lon = location.lon;
+
+                        map.setView([lat, lon], 13);
+                        L.marker([lat, lon]).addTo(map)
+                            .bindPopup(location.display_name)
+                            .openPopup();
+
+                        searchNearbyClinics(lat, lon);
+                        document.getElementById('clinics-list').innerHTML = '';
+                    } else {
+                        alert('Location not found!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data from Nominatim:', error);
+                });
+        }
+
+        // Function to search for nearby clinics
+        function searchNearbyClinics(lat, lon) {
+            var overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json];(node["amenity"="clinic"](around:500,${lat},${lon});way["amenity"="clinic"](around:500,${lat},${lon});relation["amenity"="clinic"](around:500,${lat},${lon}););out;`;
+
+            fetch(overpassUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.elements.length > 0) {
+                        data.elements.forEach(function(element) {
+                            var clinicLat = element.lat || (element.center.lat);
+                            var clinicLon = element.lon || (element.center.lon);
+                            var clinicName = element.tags.name || "Unnamed Clinic";
+                            var clinicAddress = element.tags['addr:street'] || element.tags['addr:city'] || element.tags['addr:postcode'] || "Address not available";
+
+                            L.marker([clinicLat, clinicLon]).addTo(map)
+                                .bindPopup(`<strong>${clinicName}</strong><br>Address: ${clinicAddress}`)
+                                .openPopup();
+
+                            addClinicCard(clinicName, clinicAddress, clinicLat, clinicLon);
+                        });
+                    } else {
+                        alert('No clinics found nearby.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data from Overpass API:', error);
+                });
+        }
+
+        // Function to add clinic card
+        function addClinicCard(name, address, lat, lon) {
+            var card = document.createElement('div');
+            card.classList.add('card', 'clinic-card');
+            card.innerHTML = `
+                <div class="card-body">
+                    <h5 class="card-title">${name}</h5>
+                    <p class="card-text">${address}</p>
+                    <button class="btn btn-info" onclick="showClinicLocation(${lat}, ${lon})">Show on Map</button>
+                    <button class="btn btn-success" onclick="getRouteToClinic(${lat}, ${lon})">Get Route</button>
+                </div>
+            `;
+            document.getElementById('clinics-list').appendChild(card);
+        }
+
+        // Function to show clinic location
+        function showClinicLocation(lat, lon) {
+            map.setView([lat, lon], 15);
+            L.marker([lat, lon]).addTo(map).bindPopup("Clinic Location").openPopup();
+        }
+
+        // Function to get route to clinic
+        function getRouteToClinic(lat, lon) {
+            if (currentLocation) {
+                L.Routing.control({
+                    waypoints: [
+                        L.latLng(currentLocation.lat, currentLocation.lon),
+                        L.latLng(lat, lon)
+                    ],
+                    routeWhileDragging: true
+                }).addTo(map);
+            } else {
+                alert("Please wait for your location to be fetched.");
+            }
+        }
+
+        // Search button event handler
+        document.getElementById('searchButton').addEventListener('click', function() {
+            var query = document.getElementById('searchBox').value;
+            if (query) {
+                searchLocation(query);
+            } else {
+                alert('Please enter a city name.');
+            }
+        });
+
+        // Find clinics near current location button event handler
+        document.getElementById('findNearbyClinics').addEventListener('click', function() {
+            if (currentLocation) {
+                searchNearbyClinics(currentLocation.lat, currentLocation.lon);
+            } else {
+                alert("Please wait for your location to be fetched.");
+            }
+        });
+
+    </script>
+
+</body>
+</html>

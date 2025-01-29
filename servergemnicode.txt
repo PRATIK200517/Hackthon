@@ -1,0 +1,113 @@
+// Route to interact with the Gemini API
+app.post('/chat', async (req, res) => {
+    const userMessage = req.body.message;
+
+    if (!userMessage) {
+        return res.status(400).json({ error: 'Message is required' });
+    }
+
+    try {
+        // Send request to Gemini API with the user message
+        const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+                contents: [{
+                    parts: [{ text: userMessage }]
+                }]
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        // Log the response to check its structure
+        console.log('API Response:', JSON.stringify(response.data, null, 2));
+
+        // Check if the candidates array and content exist
+        if (response.data.candidates && response.data.candidates[0] && response.data.candidates[0].content) {
+            const content = response.data.candidates[0].content;
+            // Log the content to inspect its structure
+            console.log('Content:', content);
+
+            // Extract text from parts[0].text
+            if (content.parts && content.parts[0] && content.parts[0].text) {
+                const aiResponse = content.parts[0].text; // Extract text from parts[0].text
+                res.json({ response: aiResponse });
+            } else {
+                res.status(500).json({ error: 'No text found in parts' });
+            }
+        } else {
+            res.status(500).json({ error: 'Unexpected response format from Gemini API' });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Error interacting with Gemini API' });
+    }
+});
+
+-- Create users table
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE
+);
+
+
+-- Create mood_tracker table
+CREATE TABLE mood_tracker (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL, -- Reference to the user in the users table
+    mood VARCHAR(50) NOT NULL, -- Stores the mood as a label (e.g., happy, sad, excited, tired)
+    feedback TEXT, -- Optional feedback
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, -- Automatically records the current date & time
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Insert dummy data for testing
+INSERT INTO mood_tracker (user_id, mood, feedback) 
+VALUES 
+(1, 'happy', 'Had a great day!'),
+(1, 'sad', 'Feeling a bit down, work stress.'),
+(1, 'excited', 'Excited about the project!'),
+(1, 'tired', 'Tired but content.');
+
+
+CREATE TABLE sleep_tracker (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  hours INT NOT NULL,
+  feedback TEXT,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+
+INSERT INTO sleep_tracker (user_id, hours, feedback, timestamp) VALUES
+(1, 7, 'Felt well-rested today', '2025-01-28 06:30:00'),
+(1, 6, 'Had trouble falling asleep', '2025-01-27 23:15:00'),
+(1, 8, 'Slept deeply, woke up refreshed', '2025-01-26 22:50:00'),
+(1, 5, 'Woke up a few times during the night', '2025-01-25 00:45:00'),
+(3, 7, 'Slept for 7 hours, felt good', '2025-01-24 23:00:00'),
+(3, 6, 'Struggled to sleep, woke up tired', '2025-01-23 22:30:00');
+
+
+CREATE TABLE activities (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,  -- Links to the user
+  mood_id INT NOT NULL,  -- Links to the mood from the mood_tracker table
+  activity VARCHAR(255) NOT NULL,  -- The activity (e.g., work, exercise)
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Time of activity entry
+  FOREIGN KEY (user_id) REFERENCES users(id),  -- Foreign key referencing users table
+  FOREIGN KEY (mood_id) REFERENCES mood_tracker(id)  -- Foreign key referencing mood_tracker table
+);
+
+
+INSERT INTO activities (user_id, mood_id, activity)
+VALUES
+(1, 5, 'work'),   -- mood_id 1 is 'happy'
+(1, 6, 'exercise'),  -- mood_id 2 is 'sad'
+(1, 9, 'hobby'),  -- mood_id 3 is 'excited'
+(3, 11, 'relaxation');  -- mood_id 4 is 'tired'

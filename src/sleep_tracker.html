@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sleep Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js -->
+  <style>
+    .container {
+      padding-left: 200px;  /* Add left padding */
+      padding-right: 200px; /* Add right padding */
+    }
+    .form-container {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #f8f9fa;
+    }
+    .chart-container {
+      margin-top: 50px;
+    }
+    .prediction-container {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      background-color: #f1f3f5;
+    }
+    .prediction-header {
+      font-weight: bold;
+      font-size: 1.25rem;
+    }
+    .prediction-box {
+      background-color: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-top: 15px;
+    }
+    .list-group-item {
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container my-5">
+    <!-- Sleep Form Section -->
+    <div class="form-container">
+      <h2 class="text-center">Sleep Tracker</h2>
+      <form id="sleep-form" class="mt-4">
+        <div class="mb-3">
+          <label class="form-label">Hours Slept</label>
+          <input type="number" class="form-control" id="hours" min="1" max="24" required>
+        </div>
+        <div class="mb-3">
+          <label for="feedback" class="form-label">Feedback (optional)</label>
+          <textarea class="form-control" id="feedback" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Save Sleep Data</button>
+      </form>
+    </div>
+
+    <!-- Sleep History Chart Section -->
+    <div class="chart-container">
+      <h3 class="text-center">Sleep History Chart</h3>
+      <canvas id="sleep-chart" width="400" height="200"></canvas> <!-- Chart.js Canvas -->
+    </div>
+
+    <!-- Sleep History List Section -->
+    <div class="mt-5">
+      <h3 class="text-center">Sleep History</h3>
+      <ul id="sleep-history" class="list-group mt-3"></ul>
+    </div>
+
+    <!-- Sleep Quality Prediction Section -->
+    <div class="prediction-container">
+      <div class="prediction-header">Sleep Quality Prediction</div>
+      <div id="sleep-prediction" class="prediction-box">
+        <p>Your sleep quality is <strong>loading...</strong>.</p>
+        <p>Based on your sleep history, here are some suggestions to improve your sleep:</p>
+        <ul id="improvement-suggestions">
+          <li>Ensure you get at least 7-8 hours of sleep each night.</li>
+          <li>Avoid caffeine and heavy meals late in the evening.</li>
+          <li>Try a consistent sleep schedule to regulate your circadian rhythm.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sleepForm = document.getElementById('sleep-form');
+      const sleepHistory = document.getElementById('sleep-history');
+      const sleepChart = document.getElementById('sleep-chart').getContext('2d');
+      const sleepPredictionBox = document.getElementById('sleep-prediction');
+      const improvementSuggestions = document.getElementById('improvement-suggestions');
+      let sleepData = [];
+
+      sleepForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const hours = document.getElementById('hours').value;
+        const feedback = document.getElementById('feedback').value;
+
+        if (!hours) {
+          alert('Please enter the hours slept');
+          return;
+        }
+
+        const response = await fetch('/add-sleep', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hours, feedback }),
+        });
+
+        const result = await response.json();
+        alert(result.message || result.error);
+        if (response.ok) {
+          loadSleepHistory();
+          loadSleepChart();
+          calculateSleepQuality();
+        }
+      });
+
+      async function loadSleepHistory() {
+        const response = await fetch('/sleep-history');
+        const sleepStatuses = await response.json();
+        sleepHistory.innerHTML = sleepStatuses.map(
+          (entry) =>
+            `<li class="list-group-item">
+              <strong>${entry.hours} hours</strong> - ${entry.feedback || 'No feedback'} 
+              <small class="text-muted">(${new Date(entry.timestamp).toLocaleString()})</small>
+            </li>`
+        ).join('');
+      }
+
+      async function loadSleepChart() {
+        const response = await fetch('/sleep-history');
+        const sleepStatuses = await response.json();
+        sleepData = [];
+
+        // Aggregate hours slept data
+        sleepStatuses.forEach(entry => {
+          const date = new Date(entry.timestamp).toLocaleDateString();
+          if (!sleepData[date]) {
+            sleepData[date] = 0;
+          }
+          sleepData[date] += entry.hours;
+        });
+
+        // Create the chart with updated colors
+        const labels = Object.keys(sleepData);
+        const data = Object.values(sleepData);
+
+        new Chart(sleepChart, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Total Hours Slept per Day',
+              data,
+              backgroundColor: '#315bb0',  // Changed color
+              borderColor: '#ff8c00',      // Changed color
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+      }
+
+      async function calculateSleepQuality() {
+        const response = await fetch('/sleep-history');
+        const sleepStatuses = await response.json();
+        const recentSleep = sleepStatuses.slice(-7);  // Get the last 7 days of sleep data
+        const averageSleep = recentSleep.reduce((sum, entry) => sum + entry.hours, 0) / recentSleep.length;
+
+        let quality = '';
+        let suggestions = [];
+
+        if (averageSleep >= 7) {
+          quality = 'Good';
+          suggestions = ['Keep up the great work! Continue maintaining this sleep pattern.'];
+        } else if (averageSleep >= 5) {
+          quality = 'Average';
+          suggestions = ['Try to aim for at least 7 hours of sleep each night for better rest.'];
+        } else {
+          quality = 'Poor';
+          suggestions = [
+            'Consider improving your sleep routine.',
+            'Try going to bed earlier and reducing screen time before bed.',
+            'Ensure your sleep environment is comfortable and quiet.'
+          ];
+        }
+
+        // Update prediction box with quality and suggestions
+        sleepPredictionBox.innerHTML = `
+          <p>Your sleep quality is <strong>${quality}</strong>.</p>
+          <p>Based on your sleep history, here are some suggestions to improve your sleep:</p>
+          <ul id="improvement-suggestions">
+            ${suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+          </ul>
+        `;
+      }
+
+      // Initial load
+      loadSleepHistory();
+      loadSleepChart();
+      calculateSleepQuality();
+    });
+  </script>
+</body>
+</html>

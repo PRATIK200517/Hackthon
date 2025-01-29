@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap link below -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <!-- FontAwesome link below -->
+    <script src="https://use.fontawesome.com/5d5a7b196b.js"></script>
+    <!-- Google Fonts link below -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet"> 
+    <!-- Favicon link below -->
+    <link rel="shortcut icon" href="../assets/favicon/favicon.ico" type="image/x-icon">
+    <!-- CSS link below -->
+    <link rel="stylesheet" type="text/css" href="../assets/css/style.css">
+    <title>MindHaven</title>
+    <style>
+        /* Main container for layout */
+        .main {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-evenly;
+            flex-wrap: wrap;
+            margin-top: 70px;
+        }
+
+        /* Card styling */
+        .card {
+            width: 500px;
+            text-align: center;
+            border-radius: 10px;
+            border: 2px solid black;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+            padding-bottom: 20px;
+        }
+
+        /* Card hover effect */
+        .card:hover {
+            border: 2px solid #4169E1;
+            transform: translateY(-5px);
+        }
+
+        /* Card header - Default (Black) */
+        .card-header {
+            background-color: black;
+            border-radius: 10px 10px 0 0;
+            color: white;
+            padding: 15px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Card header hover effect - Blue */
+        .card:hover .card-header {
+            background-color: #4169E1;
+            color: white;
+        }
+
+        /* Card body */
+        .card-body {
+            padding: 20px;
+            font-size: 1.1rem;
+        }
+
+        /* Button styling */
+        .btn {
+            display: inline-block;
+            background-color: black;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        /* Button hover effect */
+        .btn:hover {
+            background-color: #315bb0;
+            transform: scale(1.05);
+        }
+
+        /* Styling for mental health main information section */
+        .mental-health-main-information-home {
+            background-image: url("/assets/images/kl.jpg");
+            background-size: cover;
+            background-position: center;
+            padding: 80px 20px;
+            height: 100vh;
+            color: white; /* Set text color to white for better readability */
+            text-align: center;
+        }
+
+
+        .hero-text {
+            color: white;
+            /* Darken the background behind the text for readability */
+            padding: 20px;
+            height: 100vh;
+            border-radius: 10px;
+        }
+
+        .hero-text a {
+            color: white; /* Set the link color to white */
+            text-decoration: none;
+            font-size: 4rem;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .hero-text a:hover {
+            color: #4169E1; /* Hover effect for links */
+        }
+    </style>
+</head>
+<body>
+    
+    <header>
+        <nav class="navbar navbar-expand-lg my-0 navbar-light" id="custom-nav-css">
+        <div class="container-fluid">
+            <a class="navbar-brand active" href="index.html" id="custom-navbar-brand-mobile-responsiveness">
+                <img src="../assets/images/hugging.png" class="d-inline-block align-top" alt="Mental Health Awareness Organization logo" loading="lazy">
+                MindHaven
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarToggler">
+                <ul class="nav navbar-nav mx-auto">
+                    <li><a class="nav-link mha-nav" href="help-yourself.html">Help Yourself</a></li>
+                    <li><a class="nav-link mha-nav" href="help-others.html">Help Others</a></li>
+                    <li><a class="nav-link mha-nav" href="spread-the-word.html">Spread the Word</a></li>
+                    <li><a class="nav-link mha-nav" href="signup.html" id="signupLink">Sign Up</a></li>
+                    <li><a class="nav-link mha-nav" href="login.html" id="loginLink">Login</a></li>
+                    <li><a class="nav-link mha-nav" href="#" id="logoutLink" style="display: none;" onclick="logout()">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+        </nav>
+    </header>
+
+    <section class="mental-health-main-information-home">
+        <div class="hero-text">
+            <div><span class="mha-hero-underline mankl">Mental Health</span></div>
+            <a href="help-yourself.html" aria-label="Link to the 'Help Yourself' page">How can you help yourself?</a><br>
+            <a href="help-others.html" aria-label="Link to the 'Help Others' page">How can you help others?</a><br>
+        </div>
+    </section>
+
+    <div style="margin-top: 200px;"></div>
+    <div class="main">
+        <!-- Chatbot Card -->
+        <div>
+            <div class="card">
+                <div class="card-header">🤖 AI Chatbot</div>
+                <div class="card-body">
+                    <p>Chat with the AI to get help, answers, or just have a conversation!</p>
+                    <a href="chat.html" class="btn">Go to Chat</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sleep Tracker Card -->
+        <div>
+            <div class="card">
+                <div class="card-header">💤 Sleep Tracker</div>
+                <div class="card-body">
+                    <p>Track your sleep patterns and improve your rest.</p>
+                    <a href="sleep_tracker.html" class="btn">Go to Sleep Tracker</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- Mood Tracker Card -->
+        <div>
+            <div class="card">
+                <div class="card-header">😊 Mood Tracker</div>
+                <div class="card-body">
+                    <p>Keep track of your mood and monitor your mental health over time.</p>
+                    <a href="mood_tracker.html" class="btn">Go to Mood Tracker</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Find Nearby Clinics Card -->
+        <div>
+            <div class="card">
+                <div class="card-header">🗺️ Find Nearby Clinics</div>
+                <div class="card-body">
+                    <p>This feature allows you to search for clinics near your location or by city name using an interactive map.</p>
+                    <a href="resource.html" class="btn">Go to Feature</a>
+                </div>
+            </div>
+        </div>
+    </div>   
+
+    <div style="margin-top: 200px;"></div>
+
+    <section class="hero-image-home">
+        <div class="hero-image"> <!-- hero image background coloring structure found on stackoverflow. check README.md file for further information -->
+
+        </div>
+        <div class="content">
+            <h1>"You wake up every morning to fight the same demons that left you so tired the night before."</h1>
+            <p id="message-summary">We set out to hear the stories of the many men and women who battle with mental health problems everyday.</p>
+            <a href="educate-yourself.html#stories" aria-label="Link to the 'Story' section of the 'Educate Yourself' page"><p id="callout-hero-image">Listen to their stories<i class="fa fa-angle-right"></i></p></a>
+        </div>
+    </section>
+
+    <section class="mental-health-more-information-home">
+        <!-- Main types of mental health issues: Depression, Anxiety, PTSD -->
+        <div class="depression-home">
+            <div class="depression-image">
+                <img src="../assets/images/depression.jpg" id="depressed-man" alt="Picture of a man struggling with depression." loading="lazy">
+            </div>
+            <div class="depression-text">
+                <h1>Guidance on how to manage depression.</h1>
+                <p>Depression is a mood disorder that causes a persistent feeling of sadness and loss 
+                of interest. You may have trouble doing normal day-to-day activities, and sometimes 
+                you may feel as if life isn't worth living.</p>
+                <a href="help-yourself.html#depression" aria-label="Link to the 'Depression' text in the 'Help Yourself' page"><p>Learn about dealing with depression<i class="fa fa-angle-right"></i></p></a>
+            </div>
+        </div>
+
+        <div class="anxiety-home">
+            <div class="anxiety-image">
+                <img src="../assets/images/anxiety.jpg" id="anxious-woman" alt="Picture of a woman dealing with anxiety." loading="lazy">
+            </div>
+            <div class="anxiety-text">
+                <h1>Guidance on how to manage anxiety.</h1>
+                <p>Anxiety is a feeling of uneasiness, usually defined as an overreaction to a situation 
+                that is only subjectively seen as menacing. It is often accompanied by restlessness, fatigue 
+                and problems in concentration.</p>
+                <a href="help-yourself.html#anxiety" aria-label="Link to the 'Anxiety' text in the 'Help Yourself' page"><p>Learn about dealing with anxiety<i class="fa fa-angle-right"></i></p></a>
+            </div>
+        </div>
+
+        <div class="ptsd-home">
+            <div class="ptsd-image">
+                <img src="../assets/images/ptsd.jpg" id="woman-with-PTSD" alt="Picture of a woman dealing with PTSD." loading="lazy">
+            </div>
+            <div class="ptsd-text">
+                <h1>Guidance on how to manage PTSD.</h1>
+                <p>Post-traumatic stress disorder is a condition that's triggered by a 
+                terrifying event — either experiencing it or witnessing it. Symptoms may 
+                include flashbacks, nightmares, and uncontrollable thoughts about the event.</p>
+                <a href="help-yourself.html#ptsd" aria-label="Link to the 'PTSD' text in the 'Help Yourself' page"><p>Learn about dealing with PTSD<i class="fa fa-angle-right"></i></p></a>
+            </div>
+        </div>
+    </section>
+
+
+
+    <section class="hero-image-home-2">
+        <img src="../assets/images/community.jpg" class="full-size-image" alt="Image of a group hugging each other as a sign of community and collaboration." loading="lazy">
+    </section>
+
+
+    <section class="mental-health-emergency">
+        <h1>Get real support from real people.</h1>
+        <div class="mental-health-emergency-content">
+            <div class="call-emergency">
+                <h1>Call an emergency lifeline.</h1>
+                <p>The lifeline provides 24/7, free, and confidential support for people in 
+                distress and who are thinking of hurting themselves.</p>
+                <a href="help-yourself.html#suicide-hotline-resources" aria-label="Link to the 'Suicide Hotlines' section of the 'Help Yourself' page">
+                    <p>Call them here <i class="fa fa-angle-right"></i></p>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+   
+    <footer style=" color: #ecf0f1; padding: 20px 0; font-family: Arial, sans-serif;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+            <!-- Top Footer -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #34495e; padding-bottom: 10px;">
+                <div style="font-size: 16px; font-weight: bold;">
+                    🌐 English
+                </div>
+                <div style="display: flex; gap: 30px;">
+                    <div><a href="https://www.facebook.com/yourpage" style="color: #ecf0f1;">Facebook</a></div>
+                    <div><a href="https://twitter.com/yourprofile" style="color: #ecf0f1;">Twitter</a></div>
+                    <div><a href="https://www.instagram.com/yourprofile" style="color: #ecf0f1;">Instagram</a></div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zyADz4R70tWeJ7n6o56M7jRRzGjoosOlLmI0VbDo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-pzjw8f+ua7Kw1TIq0KAU4b9L+xOjoGe6kzkja26L5kZOUpzjvZ4TpG5XhTmHfXkP" crossorigin="anonymous"></script>
+</body>
+</html>

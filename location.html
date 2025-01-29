@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route from Current Location to Clinic</title>
+    <!-- Include Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <!-- Include Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.3/dist/leaflet-routing-machine.css" />
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        .info {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Route from Current Location to Clinic</h2>
+    <div id="map"></div>
+    <div class="info" id="clinic-info"></div>
+
+    <!-- Include Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Include Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.3/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        // Clinic data (for demo purposes, you can replace this with real clinic coordinates)
+        const clinic = {
+            name: 'Dr V T Shah Diagnostic Centre and Clinic',
+            lat: 19.2396742,  // Example clinic latitude
+            lon: 73.1366482   // Example clinic longitude
+        };
+
+        // Initialize the map
+        const map = L.map('map').setView([19.2396742, 73.1366482], 13); // Initial view centered on clinic
+
+        // Set up the OpenStreetMap layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Function to get the user's current location
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+
+                    // Add a marker for the user's current location
+                    L.marker([userLat, userLon]).addTo(map)
+                        .bindPopup("You are here")
+                        .openPopup();
+
+                    // Add the clinic marker
+                    L.marker([clinic.lat, clinic.lon]).addTo(map)
+                        .bindPopup(clinic.name)
+                        .openPopup();
+
+                    // Plot the route from the user's location to the clinic
+                    L.Routing.control({
+                        waypoints: [
+                            L.latLng(userLat, userLon),
+                            L.latLng(clinic.lat, clinic.lon)
+                        ],
+                        routeWhileDragging: true
+                    }).addTo(map);
+
+                    // Display the clinic address information
+                    document.getElementById('clinic-info').innerHTML = `
+                        <strong>${clinic.name}</strong><br>
+                        Latitude: ${clinic.lat}<br>
+                        Longitude: ${clinic.lon}<br>
+                        Address: Kalyan, Maharashtra, India
+                    `;
+                }, () => {
+                    alert("Unable to retrieve your location.");
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // Call the function to get the current location
+        getCurrentLocation();
+    </script>
+
+</body>
+</html>
